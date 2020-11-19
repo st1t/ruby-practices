@@ -28,5 +28,7 @@ jobs:
           ruby-version: 2.7.2
       - name: Install gems
         run: gem install rubocop rubocop-fjord
+      - name: Run rubocop of 02.calendar
+        run: rubocop 02.calendar/calendar.rb
       - name: Run rubocop of 05.ls
         run: rubocop 05.ls/ls.rb
