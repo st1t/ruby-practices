@@ -24,8 +24,8 @@ end
 class Ls
   def execute
     option = AppOption.new
-    files = parse_options(current_directory_files, option)
-    print_files(files)
+    filtered_files = filter_files(current_directory_files, option)
+    print_files(filtered_files, option.has?(:long))
   end
 
   private
@@ -38,38 +38,38 @@ class Ls
     files
   end
 
-  def parse_options(files, option)
-    all_files = parse_all_option(files, option.has?(:all))
-    long_files = parse_long_option(all_files, option.has?(:long))
-    parse_reverse_option(long_files, option.has?(:reverse), option.has?(:long))
+  def filter_files(files, option)
+    filtered_hidden_files = option.has?(:all) ? files : filter_hidden_files(files)
+    filtered_long_files = filter_long_files(filtered_hidden_files, option.has?(:long))
+    filter_reverse_files(filtered_long_files, option.has?(:reverse), option.has?(:long))
   end
 
-  def print_files(rows)
-    rows.each do |row|
-      puts "#{row[0]}#{row[1]} #{row[2]} #{row[3]} #{row[4]} #{row[5]} #{row[6]} #{row[7]}"
-    end
-  end
-
-  # input: {:"ls.rb"=>#<File::Stat>,:".dummy"=>#<File::Stat>}
-  def parse_all_option(files, all_flag)
-    if all_flag
-      files
-    else
-      hash = {}
-      not_hidden_files(files).each do |file|
-        hash[":#{file[0]}"] = file[1]
+  def print_files(rows, long_flag)
+    rows.each_with_index do |row, i|
+      if long_flag
+        puts "#{row[0]}#{row[1]} #{row[2]} #{row[3]} #{row[4]} #{row[5]} #{row[6]} #{row[7]}"
+      elsif i == rows.length - 1
+        print "#{row[0]} \n"
+      else
+        print "#{row[0]} "
       end
     end
   end
 
-  def not_hidden_files(files)
-    files.find_all do |file|
+  def filter_hidden_files(files)
+    hash = {}
+
+    filtered_files = files.find_all do |file|
       !/^\./.match(:"#{file[0]}")
+    end
+
+    filtered_files.each do |file|
+      hash[":#{file[0]}"] = file[1]
     end
   end
 
   # input: {:"ls.rb"=>#<File::Stat>,:"test.rb"=>#<File::Stat>}
-  def parse_long_option(files, long_flag)
+  def filter_long_files(files, long_flag)
     array = []
     files.each do |f|
       array << if long_flag
@@ -107,7 +107,7 @@ class Ls
     permission
   end
 
-  def parse_reverse_option(files, reverse_flag, long_flag)
+  def filter_reverse_files(files, reverse_flag, long_flag)
     if reverse_flag && long_flag
       files.sort do |a, b|
         b[7] <=> a[7]
