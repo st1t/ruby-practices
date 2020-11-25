@@ -28,7 +28,7 @@ class Ls
   def execute
     option = AppOption.new
     filtered_files = filter_files(current_directory_files(option.has?(:all)), option)
-    blocks = files_blocks(filtered_files)
+    blocks = files_blocks(filtered_files) if option.has?(:long)
     print_files(blocks, filtered_files, option.has?(:long))
   end
 
