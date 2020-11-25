@@ -22,6 +22,8 @@ end
 
 # Ls class is a class that mimics the ls command
 class Ls
+  require 'etc'
+
   def execute
     option = AppOption.new
     filtered_files = filter_files(current_directory_files, option)
@@ -86,8 +88,21 @@ class Ls
     row = []
     fstat = file[1]
     row.push(file_symbol(fstat), file_permission(fstat.mode.to_s(2)))
-    row.push(fstat.nlink, fstat.uid, fstat.gid, fstat.size, fstat.mtime)
+    row.push(fstat.nlink, user_name(fstat.uid), group_name(fstat.gid))
+    row.push(fstat.size, created_time(fstat.mtime))
     row << file[0].to_s.gsub(/^:/, '')
+  end
+
+  def user_name(uid)
+    Etc.getpwuid(uid).name
+  end
+
+  def group_name(gid)
+    Etc.getgrgid(gid).name
+  end
+
+  def created_time(time)
+    time.strftime('%m月 %d %H:%M').to_s
   end
 
   def file_symbol(fstat)
