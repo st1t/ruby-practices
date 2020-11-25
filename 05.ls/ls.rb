@@ -1,3 +1,4 @@
+#!/usr/bin/env /usr/bin/ruby
 # frozen_string_literal: true
 
 # AppOption class is a class to parse input options
@@ -26,18 +27,27 @@ class Ls
 
   def execute
     option = AppOption.new
-    filtered_files = filter_files(current_directory_files, option)
-    print_files(filtered_files, option.has?(:long))
+    filtered_files = filter_files(current_directory_files(option.has?(:all)), option)
+    blocks = files_blocks(filtered_files)
+    print_files(blocks, filtered_files, option.has?(:long))
   end
 
   private
 
-  def current_directory_files
+  def current_directory_files(all_flag)
     files = {}
     Dir.foreach('.') do |f|
       files[:"#{f}"] = File::Stat.new(f)
     end
-    files
+    all_flag ? files : filter_hidden_files(files)
+  end
+
+  def files_blocks(files)
+    blocks = 0
+    files.each do |f|
+      blocks += f[6]
+    end
+    blocks
   end
 
   def filter_files(files, option)
@@ -46,10 +56,11 @@ class Ls
     filter_reverse_files(filtered_long_files, option.has?(:reverse), option.has?(:long))
   end
 
-  def print_files(rows, long_flag)
+  def print_files(blocks, rows, long_flag)
     rows.each_with_index do |row, i|
       if long_flag
-        puts "#{row[0]}#{row[1]} #{row[2]} #{row[3]} #{row[4]} #{row[5]} #{row[6]} #{row[7]}"
+        puts "合計 #{blocks}" if i.zero?
+        puts "#{row[0]}#{row[1]} #{row[2]} #{row[3]} #{row[4]} #{row[5]} #{row[7]} #{row[8]}"
       elsif i == rows.length - 1
         print "#{row[0]} \n"
       else
@@ -89,7 +100,7 @@ class Ls
     fstat = file[1]
     row.push(file_symbol(fstat), file_permission(fstat.mode.to_s(2)))
     row.push(fstat.nlink, user_name(fstat.uid), group_name(fstat.gid))
-    row.push(fstat.size, created_time(fstat.mtime))
+    row.push(fstat.size, fstat.blocks, created_time(fstat.mtime))
     row << file[0].to_s.gsub(/^:/, '')
   end
 
