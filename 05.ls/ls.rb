@@ -102,7 +102,7 @@ class Ls
   end
 
   def created_time(time)
-    time.strftime("%m月 %d %H:%M").to_s
+    time.strftime('%m月 %d %H:%M').to_s
   end
 
   def file_symbol(fstat)
